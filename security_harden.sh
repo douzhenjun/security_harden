@@ -20,15 +20,15 @@ do
     RE3="${arr[6]}"
 
 if [ "${TYPE}" = "Automatic_configuration" ]; then
-	#set different separator for different param arrays
-	IFS=' '
+	#"RE1","RE2","RE3"列保存列表数据,数据以;为分隔符,将这三个变量变成列表
+	IFS=';'
 	RE1=($RE1)
 	RE2=($RE2)
 	RE3=($RE3)
-	IFS=';'
-	COMM=($COMM)
+	#"COMM"中的数据限制为单行而非多行, 数据以';'结尾
+	COMM=$COMM
 	
-	#check if base directory or file exists
+	#建文件SQL_WORK
         if [ ! -d "${BASE_DIRECTORY}" ]; then
 			mkdir -p $BASE_DIRECTORY
         fi
@@ -44,33 +44,28 @@ if [ "${TYPE}" = "Automatic_configuration" ]; then
         SQL_WORK="$BASE_DIRECTORY/${0}.sql"
         chmod 775 $SQL_WORK
 	
-	echo "COMM=$COMM";
-	#echo "RE1=$RE1";
-	#echo "RE2=$RE2";
-	#echo "RE3=$RE3";
-
-	#with keywords for to traverse arrays elements redirect to sql_work
-	for i in ${COMM[@]};
+	#根据参数列表的长度将命令先逐一写入SQL_WORK.
+	for ((j=1;j<=${#RE1[@]};j++))
 	do
-		echo "${i};" >> $SQL_WORK
+		echo $COMM >> $SQL_WORK
 	done
 
 	sed -i /^$/d $SQL_WORK;
 
 	for j in ${RE1[@]};
 	do
-		sed -i "s/<read1>/${j}/" $SQL_WORK
+		sed -i "0,/<read1>/{s/<read1>/${j}/}" $SQL_WORK
 	done
 	for j in ${RE2[@]};
 	do
-		sed -i "s/<read2>/${j}/" $SQL_WORK
+		sed -i "0,/<read2>/{s/<read2>/${j}/}" $SQL_WORK
 	done
 	for j in ${RE3[@]};
 	do
-		sed -i "s/<read3>/${j}/" $SQL_WORK
+		sed -i "0,/<read3>/{s/<read3>/${j}/}" $SQL_WORK
 	done
 		
-	#sign up oracle by export sid and sqlplus statement
+	#以system用户登录oracle实例,并导入SQL_WORK.
 	su - oracle -c "export ORACLE_SID=${ORACLE_SID} && sqlplus / as sysdba" << EOF
 	whenever sqlerror exit 1;
 	@${SQL_WORK}
@@ -80,9 +75,10 @@ EOF
   else
     echo "failed"
 	fi
-	
 	echo ""${Cno}","${Sno}","${DIS}","${TYPE}","${result}""
+	#清空SQL_WORK的内容
+	cat /dev/null > $SQL_WORK
 fi
-done < security_test_2.csv
+done < security_table_test.csv
 
 
