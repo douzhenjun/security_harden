@@ -1,7 +1,8 @@
 #!/bin/bash
 
 ORACLE_SID=cc
-BASE_DIRECTORY="/tmp/oracle"
+BASE_DIRECTORY="/tmp/security_harden"
+LOG="$BASE_DIRECTORY/alert.log"
 
 while read line
 
@@ -63,16 +64,18 @@ if [ "${TYPE}" = "Automatic_configuration" ]; then
 	done
 		
 	#以system用户登录oracle实例,并导入SQL_WORK.
+	echo `date '+%Y-%m-%d %H:%M:%S'` " 
 	su - oracle -c "export ORACLE_SID=${ORACLE_SID} && sqlplus / as sysdba" << EOF
 	whenever sqlerror exit 1;
 	@${SQL_WORK}
-EOF
+EOF " >> $LOG 2>&1
+
 	if [[ "$?" -eq 0 ]]; then
-    echo "success"
+    echo "${Cno} success" >> $LOG
   else
-    echo "failed"
+    echo "${Cno} failed" >> $LOG
 	fi
-	echo ""${Cno}","${Sno}","${DIS}","${TYPE}","${result}""
+	
 	#清空SQL_WORK的内容
 	cat /dev/null > $SQL_WORK
 fi
