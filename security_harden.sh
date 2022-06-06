@@ -35,14 +35,11 @@ if [ "${TYPE}" = "Automatic_configuration" ]; then
 	
 		cd $BASE_DIRECTORY
 		
-        if [ -f "${0}.sql" ]; then
-			rm -rf "${0}.sql"
+        if [ ! -f "${0}.sql" ]; then
+			touch "${0}.sql"
+			SQL_WORK="$BASE_DIRECTORY/${0}.sql"
+			chmod 775 $SQL_WORK
         fi
-	
-		touch "${0}.sql"
-
-        SQL_WORK="$BASE_DIRECTORY/${0}.sql"
-        chmod 775 $SQL_WORK
 	
 	#根据参数列表的长度将命令先逐一写入SQL_WORK.
 	for ((j=1;j<=${#RE1[@]};j++))
